@@ -76,6 +76,7 @@ typedef enum {
 	oGatewayAddress,
 	oGatewayPort,
 	oFasPort,
+	oFasKey,
 	oFasPath,
 	oFasRemoteIP,
 	oFasSecureEnabled,
@@ -128,6 +129,7 @@ static const struct {
 	{ "gatewayaddress", oGatewayAddress },
 	{ "gatewayport", oGatewayPort },
 	{ "fasport", oFasPort },
+	{ "faskey", oFasKey },
 	{ "fasremoteip", oFasRemoteIP },
 	{ "fas_secure_enabled", oFasSecureEnabled },
 	{ "faspath", oFasPath },
@@ -201,6 +203,7 @@ config_init(void)
 	config.gw_ip = NULL;
 	config.gw_port = DEFAULT_GATEWAYPORT;
 	config.fas_port = DEFAULT_FASPORT;
+	config.fas_key = DEFAULT_FASKEY;
 	config.fas_secure_enabled = DEFAULT_FAS_SECURE_ENABLED;
 	config.fas_remoteip = NULL;
 	config.fas_path = DEFAULT_FASPATH;
@@ -774,6 +777,9 @@ config_read(const char *filename)
 			break;
 		case oFasPath:
 			config.fas_path = safe_strdup(p1);
+			break;
+		case oFasKey:
+			config.fas_key = safe_strdup(p1);
 			break;
 		case oFasRemoteIP:
 			config.fas_remoteip = safe_strdup(p1);

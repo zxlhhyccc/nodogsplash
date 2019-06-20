@@ -82,6 +82,11 @@ config nodogsplash
   # Typical Locally Hosted example (ie fasremoteip not set):
   #option fasport '2080'
 
+  # Option: faskey
+  # Default: not set
+  # A key for NDS to encrypt the query string sent to FAS
+  #option faskey '123abcABC'
+
   # Option: fasremoteip
   # Default: GatewayAddress (the IP of NDS)
   # If set, this is the remote ip address of the FAS.

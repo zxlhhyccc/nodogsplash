@@ -284,6 +284,10 @@ main_loop(void)
 		debug(LOG_NOTICE, "FAS URL is http://%s:%u%s\n", config->fas_remoteip, config->fas_port, config->fas_path);
 	}
 
+	if (config->fas_key) {
+		debug(LOG_NOTICE, "FAS key is: %s\n", config->fas_key);
+	}
+
 	if (config->fas_secure_enabled != 1 && config->fas_port) {
 		debug(LOG_NOTICE, "Warning - Forwarding Authentication - Security is DISABLED.\n");
 	}
