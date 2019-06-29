@@ -82,6 +82,15 @@ config nodogsplash
   # Typical Locally Hosted example (ie fasremoteip not set):
   #option fasport '2080'
 
+  # Option: fasremotefqdn
+  # Default: Not set
+  # If set, this is the remote fully qualified domain name (FQDN) of the FAS.
+  # The protocol must NOT be prepended to the FQDN (ie http:// or https://)
+  # To prevent CPD or browser security errors NDS prepends http:// before redirection.
+  # If set, DNS MUST resolve fasremotefqdn to be the same ip address as fasremoteip.
+  # Typical Remote Shared Hosting Example:
+  #option fasremotefqdn 'onboard-wifi.net'
+
   # Option: fasremoteip
   # Default: GatewayAddress (the IP of NDS)
   # If set, this is the remote ip address of the FAS.
@@ -94,10 +103,13 @@ config nodogsplash
   # This is the path from the FAS Web Root to the FAS login page
   # (not the file system root).
   #
-  # Typical Remote Shared Hosting Example:
+  # Typical Remote Shared Hosting Example (if fasremotefqdn is not specified):
   #option faspath '/onboard-wifi.net/nodog/fas.php'
   #
-  # Typical Locally Hosted example (ie fasremoteip not set):
+  # Typical Remote Shared Hosting Example (ie BOTH fasremoteip AND fasremotefqdn set):
+  #option faspath '/nodog/fas.php'
+  #
+  # Typical Locally Hosted Example (ie fasremoteip not set):
   #option faspath '/nodog/fas.php'
 
   # Option: faskey
