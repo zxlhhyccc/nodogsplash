@@ -693,8 +693,10 @@ static int preauthenticated(struct MHD_Connection *connection,
  */
 static int encode_and_redirect_to_splashpage(struct MHD_Connection *connection, const char *originurl, const char *querystr)
 {
+	char msg[HTMLMAXSIZE] = {0};
 	char *splashpageurl = NULL;
 	char encoded[QUERYMAXLEN] = {0};
+	char *phpcmd = NULL;
 	s_config *config;
 	int ret;
 
@@ -719,8 +721,32 @@ static int encode_and_redirect_to_splashpage(struct MHD_Connection *connection, 
 			safe_asprintf(&splashpageurl, "%s%s&redir=%s",
 				config->fas_url, querystr, encoded);
 		} else if (config->fas_secure_enabled == 2) {
+
+			safe_asprintf(&phpcmd,
+				"echo '<?php \n"
+				"$key=\"%s\";\n"
+				"$string=\"%s\";\n"
+				"$cipher=\"aes-256-cbc\";\n"
+
+				"if (in_array($cipher, openssl_get_cipher_methods())) {\n"
+					"$secret_iv = base64_encode(openssl_random_pseudo_bytes(\"8\"));\n"
+					"$iv = substr(openssl_digest($secret_iv, \"sha256\"), 0, 16 );\n"
+					"$string = base64_encode( openssl_encrypt( $string, $cipher, $key, 0, $iv ) );\n"
+					"echo \"?fas=\".$string.\"&iv=\".$iv;\n"
+				"}\n"
+				" ?>' "
+				" | %s\n",
+				config->fas_key, querystr, config->fas_ssl);
+
+			if (execute_ret(msg, sizeof(msg) - 1, phpcmd) == 0) {
+				debug(LOG_NOTICE, "Encrypted query string=%s\n", msg);
+			} else {
+				debug(LOG_NOTICE, "Error encrypting query string. %s", msg);
+			}
+			free(phpcmd);
+
 			safe_asprintf(&splashpageurl, "%s%s&redir=%s",
-				config->fas_url, querystr, encoded);
+				config->fas_url, msg, encoded);
 		} else {
 			safe_asprintf(&splashpageurl, "%s%s&redir=%s",
 				config->fas_url, querystr, encoded);
@@ -769,8 +795,10 @@ static int redirect_to_splashpage(struct MHD_Connection *connection, t_client *c
 	} else if (config->fas_secure_enabled == 1) {
 		safe_asprintf(&querystr, "?clientip=%s&gatewayname=%s", client->ip, config->gw_name);
 	} else if (config->fas_secure_enabled == 2) {
-		safe_asprintf(&querystr, "?clientip=%s%sgatewayname=%s%stok=%s",
-			client->ip, QUERYSEPARATOR, config->gw_name, QUERYSEPARATOR, client->token);
+		safe_asprintf(&querystr, "clientip=%s%sgatewayname=%s%stok=%s",
+			client->ip, QUERYSEPARATOR,
+			config->gw_name, QUERYSEPARATOR,
+			client->token);
 	} else {
 		safe_asprintf(&querystr, "?clientip=%s&gatewayname=%s", client->ip, config->gw_name);
 	}
