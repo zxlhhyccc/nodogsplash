@@ -224,6 +224,8 @@ main_loop(void)
 	char msg[255] = {0};
 	int rc;
 	char *fasurl = NULL;
+	char *fasssl = NULL;
+	char *phpcmd = NULL;
 
 	config = config_get_config();
 
@@ -295,18 +297,34 @@ main_loop(void)
 	}
 
 	if (config->fas_key) {
-		rc = execute_ret(msg, sizeof(msg) - 1, "php -v");
+		/* PHP cli command can be php or php-cli depending on Linux version. */
+		if (execute_ret(msg, sizeof(msg) - 1, "php -v") == 0) {
+			safe_asprintf(&fasssl, "php");
+			debug(LOG_NOTICE, "SSL Provider: %s FAS key is: %s\n", &msg, config->fas_key);
 
-		if (rc != 0) {
-			rc = execute_ret(msg, sizeof(msg) - 1, "php-cli -v");
+		} else if (execute_ret(msg, sizeof(msg) - 1, "php-cli -v") == 0) { 
+			safe_asprintf(&fasssl, "php-cli");
+			debug(LOG_NOTICE, "SSL Provider: %s FAS key is: %s\n", &msg, config->fas_key);
 
+		} else {
 			debug(LOG_ERR, "Required PHP packages are not available");
 			debug(LOG_ERR, "Exiting...");
 			exit(1);
+		}
+		config->fas_ssl = safe_strdup(fasssl);
+		free(fasssl);
+		safe_asprintf(&phpcmd,
+			"echo '<?php "
+			"if (!extension_loaded (openssl)) {exit(1);"
+			"} ?>' | %s", config->fas_ssl);
+		if (execute_ret(msg, sizeof(msg) - 1, phpcmd) == 0) {
+			debug(LOG_NOTICE, "OpenSSL module is loaded\n");
 		} else {
-			debug(LOG_NOTICE, "SSL: %s FAS key is: %s\n", &msg, config->fas_key);
-		} 
-
+			debug(LOG_ERR, "OpenSSL PHP module is not loaded");
+			debug(LOG_ERR, "Exiting...");
+			exit(1);
+		}
+		free(phpcmd);
 	}
 
 
