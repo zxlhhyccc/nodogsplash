@@ -711,13 +711,19 @@ static int encode_and_redirect_to_splashpage(struct MHD_Connection *connection, 
 	if (config->fas_port) {
 		// Generate secure query string or authaction url
 		// Note: config->fas_path contains a leading / as it is the path from the FAS web root.
-		if (config->fas_secure_enabled) {
-			safe_asprintf(&splashpageurl, "http://%s:%u%s%s&redir=%s",
-				config->fas_remoteip, config->fas_port, config->fas_path, querystr, encoded);
-		} else {
+		if (config->fas_secure_enabled == 0) {
 			safe_asprintf(&splashpageurl, "http://%s:%u%s?authaction=http://%s/%s/%s&redir=%s",
 				config->fas_remoteip, config->fas_port, config->fas_path, 
 				config->gw_address, config->authdir, querystr, encoded);
+		} else if (config->fas_secure_enabled == 1) {
+			safe_asprintf(&splashpageurl, "%s%s&redir=%s",
+				config->fas_url, querystr, encoded);
+		} else if (config->fas_secure_enabled == 2) {
+			safe_asprintf(&splashpageurl, "%s%s&redir=%s",
+				config->fas_url, querystr, encoded);
+		} else {
+			safe_asprintf(&splashpageurl, "%s%s&redir=%s",
+				config->fas_url, querystr, encoded);
 		}
 	} else {
 		safe_asprintf(&splashpageurl, "http://%s/%s?redir=%s",
@@ -758,8 +764,13 @@ static int redirect_to_splashpage(struct MHD_Connection *connection, t_client *c
 
 	debug(LOG_DEBUG, "Query string is [ %s ]", query);
 
-	if (config->fas_secure_enabled != 1) {
+	if (config->fas_secure_enabled == 0) {
 		safe_asprintf(&querystr, "?clientip=%s&gatewayname=%s&tok=%s", client->ip, config->gw_name, client->token);
+	} else if (config->fas_secure_enabled == 1) {
+		safe_asprintf(&querystr, "?clientip=%s&gatewayname=%s", client->ip, config->gw_name);
+	} else if (config->fas_secure_enabled == 2) {
+		safe_asprintf(&querystr, "?clientip=%s%sgatewayname=%s%stok=%s",
+			client->ip, QUERYSEPARATOR, config->gw_name, QUERYSEPARATOR, client->token);
 	} else {
 		safe_asprintf(&querystr, "?clientip=%s&gatewayname=%s", client->ip, config->gw_name);
 	}

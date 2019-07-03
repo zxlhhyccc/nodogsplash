@@ -221,6 +221,9 @@ main_loop(void)
 	int result = 0;
 	pthread_t tid;
 	s_config *config;
+	char msg[255] = {0};
+	int rc;
+	char *fasurl = NULL;
 
 	config = config_get_config();
 
@@ -274,21 +277,65 @@ main_loop(void)
 		httpdAddC404Content(webserver, http_nodogsplash_callback_404);
 	*/
 
+
+	if (config->fas_remoteip) {
+		if (is_addr(config->fas_remoteip) == 1) {
+			debug(LOG_INFO, "fasremoteip - %s - is a valid IPv4 address...", config->fas_remoteip);
+		} else {
+			debug(LOG_ERR, "fasremoteip - %s - is NOT a valid IPv4 address format...", config->fas_remoteip);
+			debug(LOG_ERR, "Exiting...");
+			exit(1);
+		}
+	} else {
+		if (config->fas_port == 80) {
+			debug(LOG_ERR, "Invalid fasport - port 80 is reserved and cannot be used for local FAS...");
+			debug(LOG_ERR, "Exiting...");
+			exit(1);
+		}
+	}
+
+	if (config->fas_key) {
+		rc = execute_ret(msg, sizeof(msg) - 1, "php -v");
+
+		if (rc != 0) {
+			rc = execute_ret(msg, sizeof(msg) - 1, "php-cli -v");
+
+			debug(LOG_ERR, "Required PHP packages are not available");
+			debug(LOG_ERR, "Exiting...");
+			exit(1);
+		} else {
+			debug(LOG_NOTICE, "SSL: %s FAS key is: %s\n", &msg, config->fas_key);
+		} 
+
+	}
+
+
+
 	/* Make sure fas_remoteip is set. Note: This does not enable FAS. */
 	if (!config->fas_remoteip) {
 		config->fas_remoteip = safe_strdup(config->gw_ip);
 	}
 
+	if (config->fas_remotefqdn) {
+		debug(LOG_NOTICE, "FAS FQDN is: %s\n", config->fas_remotefqdn);
+	}
+
 	if (config->fas_port) {
 		debug(LOG_NOTICE, "Forwarding Authentication is Enabled.\n");
-		debug(LOG_NOTICE, "FAS URL is http://%s:%u%s\n", config->fas_remoteip, config->fas_port, config->fas_path);
+		if (config->fas_remotefqdn) {
+			safe_asprintf(&fasurl, "http://%s:%u%s",
+				config->fas_remotefqdn, config->fas_port, config->fas_path);
+			config->fas_url = safe_strdup(fasurl);
+		} else {
+			safe_asprintf(&fasurl, "http://%s:%u%s",
+				config->fas_remoteip, config->fas_port, config->fas_path);
+			config->fas_url = safe_strdup(fasurl);
+		}
+		debug(LOG_NOTICE, "FAS URL is %s\n", config->fas_url);
+		free(fasurl);
 	}
 
-	if (config->fas_key) {
-		debug(LOG_NOTICE, "FAS key is: %s\n", config->fas_key);
-	}
-
-	if (config->fas_secure_enabled != 1 && config->fas_port) {
+	if (config->fas_secure_enabled == 0 && config->fas_port) {
 		debug(LOG_NOTICE, "Warning - Forwarding Authentication - Security is DISABLED.\n");
 	}
 

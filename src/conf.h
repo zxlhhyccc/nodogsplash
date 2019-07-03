@@ -56,7 +56,6 @@
 #define DEFAULT_GATEWAYPORT 2050
 #define DEFAULT_FASPORT 0
 #define DEFAULT_FAS_SECURE_ENABLED 1
-#define DEFAULT_FASKEY 0
 #define DEFAULT_FASPATH "/"
 #define DEFAULT_REMOTE_AUTH_PORT 80
 #define DEFAULT_CHECKINTERVAL 30
@@ -158,6 +157,9 @@ typedef struct {
 	char *fas_path;			/**< @brief Path to forward authentication page of FAS */
 	char *fas_key;			/**< @brief AES key for FAS */
 	char *fas_remoteip;		/**< @brief IP addess of a remote FAS */
+	char *fas_remotefqdn;		/**< @brief FQDN of a remote FAS */
+	char *fas_url;			/**< @brief URL of a remote FAS */
+	char *fas_ssl;			/**< @brief SSL provider for FAS */
 	char *webroot;			/**< @brief Directory containing splash pages, etc. */
 	char *splashpage;		/**< @brief Name of main splash page */
 	char *statuspage;		/**< @brief Name of info status page */

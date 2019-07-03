@@ -79,6 +79,9 @@ typedef enum {
 	oFasKey,
 	oFasPath,
 	oFasRemoteIP,
+	oFasRemoteFQDN,
+	oFasURL,
+	oFasSSL,
 	oFasSecureEnabled,
 	oHTTPDMaxConn,
 	oWebRoot,
@@ -131,6 +134,9 @@ static const struct {
 	{ "fasport", oFasPort },
 	{ "faskey", oFasKey },
 	{ "fasremoteip", oFasRemoteIP },
+	{ "fasremotefqdn", oFasRemoteFQDN },
+	{ "fasurl", oFasURL },
+	{ "fasssl", oFasSSL },
 	{ "fas_secure_enabled", oFasSecureEnabled },
 	{ "faspath", oFasPath },
 	{ "webroot", oWebRoot },
@@ -203,9 +209,12 @@ config_init(void)
 	config.gw_ip = NULL;
 	config.gw_port = DEFAULT_GATEWAYPORT;
 	config.fas_port = DEFAULT_FASPORT;
-	config.fas_key = DEFAULT_FASKEY;
+	config.fas_key = NULL;
 	config.fas_secure_enabled = DEFAULT_FAS_SECURE_ENABLED;
 	config.fas_remoteip = NULL;
+	config.fas_remotefqdn = NULL;
+	config.fas_url = NULL;
+	config.fas_ssl = NULL;
 	config.fas_path = DEFAULT_FASPATH;
 	config.webroot = safe_strdup(DEFAULT_WEBROOT);
 	config.splashpage = safe_strdup(DEFAULT_SPLASHPAGE);
@@ -784,6 +793,9 @@ config_read(const char *filename)
 		case oFasRemoteIP:
 			config.fas_remoteip = safe_strdup(p1);
 			break;
+		case oFasRemoteFQDN:
+			config.fas_remotefqdn = safe_strdup(p1);
+			break;
 		case oBinAuth:
 			config.binauth = safe_strdup(p1);
 			if (!((stat(p1, &sb) == 0) && S_ISREG(sb.st_mode) && (sb.st_mode & S_IXUSR))) {
@@ -957,22 +969,6 @@ config_read(const char *filename)
 	}
 
 	fclose(fd);
-
-	if (config.fas_remoteip) {
-		if (is_addr(config.fas_remoteip) == 1) {
-			debug(LOG_INFO, "fasremoteip - %s - is a valid IPv4 address...", config.fas_remoteip);
-		} else {
-			debug(LOG_ERR, "fasremoteip - %s - is NOT a valid IPv4 address format...", config.fas_remoteip);
-			debug(LOG_ERR, "Exiting...");
-			exit(1);
-		}
-	} else {
-		if (config.fas_port == 80) {
-			debug(LOG_ERR, "Invalid fasport - port 80 is reserved and cannot be used for local FAS...");
-			debug(LOG_ERR, "Exiting...");
-			exit(1);
-		}
-	}
 
 	debug(LOG_INFO, "Done reading configuration file '%s'", filename);
 }
