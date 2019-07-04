@@ -304,10 +304,10 @@ main_loop(void)
 
 		} else if (execute_ret(msg, sizeof(msg) - 1, "php-cli -v") == 0) { 
 			safe_asprintf(&fasssl, "php-cli");
-			debug(LOG_NOTICE, "SSL Provider: %s FAS key is: %s\n", &msg, config->fas_key);
-
+			debug(LOG_NOTICE, "SSL Provider is active");
+			debug(LOG_DEBUG, "SSL Provider: %s FAS key is: %s\n", &msg, config->fas_key);
 		} else {
-			debug(LOG_ERR, "Required PHP packages are not available");
+			debug(LOG_ERR, "PHP packages PHP CLI and PHP OpenSSL are required");
 			debug(LOG_ERR, "Exiting...");
 			exit(1);
 		}
